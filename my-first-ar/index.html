@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AR Wildlife Exhibit</title>
+  
+  <!-- A-Frame and AR.js libraries -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <!-- CSS for the Status Banner (Requirement 5) -->
+  <style>
+    #status-banner {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      background-color: #E74C3C; /* Red when lost */
+      color: white;
+      font-family: sans-serif;
+      font-weight: bold;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: background-color 0.3s ease;
+      text-align: center;
+      width: 80%;
+      max-width: 300px;
+    }
+  </style>
+
+  <script>
+    // Requirement 5: Marker Handler Component for the Status Banner
+    AFRAME.registerComponent('marker-handler', {
+      init: function () {
+        const banner = document.getElementById('status-banner');
+        
+        // When marker is found, change text and make banner green
+        this.el.addEventListener('markerFound', () => {
+          banner.innerText = 'Exhibit Found! Tap the shapes.';
+          banner.style.backgroundColor = '#2ECC71'; // Green
+        });
+        
+        // When marker is lost, change text and make banner red
+        this.el.addEventListener('markerLost', () => {
+          banner.innerText = 'Looking for Hiro marker...';
+          banner.style.backgroundColor = '#E74C3C'; // Red
+        });
+      }
+    });
+
+    // Requirement 4a: Interaction - Ball color change
+    AFRAME.registerComponent('color-change', {
+      init: function () {
+        const colors = ['#EF2D5E', '#4CC3D9', '#FFC65D', '#8BC34A', '#9B59B6'];
+        let i = 0;
+        this.el.addEventListener('click', () => {
+          i = (i + 1) % colors.length;
+          this.el.setAttribute('color', colors[i]);
+        });
+      }
+    });
+
+    // Requirement 4b: Interaction - New custom component (Toggle Scale)
+    AFRAME.registerComponent('grow-on-tap', {
+      init: function () {
+        let isLarge = false;
+        this.el.addEventListener('click', () => {
+          if (!isLarge) {
+            // Grow
+            this.el.setAttribute('animation__scale', 'property: scale; to: 1.5 1.5 1.5; dur: 300; easing: easeInOutQuad');
+          } else {
+            // Shrink back to normal
+            this.el.setAttribute('animation__scale', 'property: scale; to: 1 1 1; dur: 300; easing: easeInOutQuad');
+          }
+          isLarge = !isLarge;
+        });
+      }
+    });
+  </script>
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+  
+  <!-- The Status Banner UI -->
+  <div id="status-banner">Looking for Hiro marker...</div>
+
+  <!-- rayOrigin: mouse allows tap interactions on mobile screens -->
+  <a-scene embedded 
+           vr-mode-ui="enabled: false" 
+           arjs="sourceType: webcam; debugUIEnabled: false;"
+           cursor="rayOrigin: mouse" 
+           raycaster="objects: .clickable">
+    
+    <a-assets>
+      <!-- Requirement 3: 3D Model (Fox from Khronos glTF sample repo) -->
+      <a-asset-item id="fox-model" src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Fox/glTF/Fox.gltf"></a-asset-item>
+    </a-assets>
+
+    <!-- Attach the marker-handler component here -->
+    <a-marker preset="hiro" marker-handler>
+      
+      <!-- Requirement 1: <a-text> Label -->
+      <a-text value="Digital Wildlife Exhibit" position="0 1.5 -1.2" align="center" width="4" color="#2C3E50"></a-text>
+
+      <!-- Requirement 1: Primitive 1 (Cylinder Pedestal) -->
+      <a-cylinder position="0 0 0" radius="1.2" height="0.1" color="#BDC3C7"></a-cylinder>
+
+      <!-- Requirement 3 & 2: 3D Model + Animation 1 (Rotation) -->
+      <a-entity gltf-model="#fox-model" 
+                position="0 0.05 0" 
+                scale="0.02 0.02 0.02" 
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+      </a-entity>
+
+      <!-- Requirement 1 & 4a: Primitive 2 (Sphere) + Workshop Color Change -->
+      <!-- Added class="clickable" so the raycaster knows it can be tapped -->
+      <a-sphere position="-0.8 0.4 0.5" radius="0.2" color="#EF2D5E" class="clickable" color-change></a-sphere>
+
+      <!-- Requirement 1, 2, & 4b: Primitive 3 (Box) + Animation 2 (Position Bobbing) + Grow Interaction -->
+      <a-box position="0.8 0.4 0.5" width="0.3" height="0.3" depth="0.3" color="#F39C12" class="clickable" grow-on-tap
+             animation="property: position; to: 0.8 0.6 0.5; dir: alternate; dur: 1000; loop: true; easing: easeInOutSine">
+      </a-box>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+</body>
+</html>
